@@ -2,15 +2,26 @@
 const urlParams = new URLSearchParams(window.location.search);
 
 // Ambil nilainya (kalau tidak ada, pakai default)
-const nama = urlParams.get('to') || 'Tamu Undangan';
-const instansi = urlParams.get('instansi') || '';
-const kategori = urlParams.get('kategori') || '';
+let nama = urlParams.get('to') || 'Tamu Undangan';
+let instansi = urlParams.get('instansi') || '';
+let kategori = urlParams.get('kategori') || '';
+
+// jaga-jaga kalau link lama: to=Nama, Instansi, kategori, nomor
+if (!instansi && nama.includes(',')) {
+    const p = nama.split(',').map(s => s.trim());
+    nama = p[0];
+    instansi = p[1] || '';
+    kategori = p[2] || '';
+}
 
 // Tampilkan ke halaman
-document.getElementById('nama').textContent = nama;
-document.getElementById('instansi').textContent = instansi;
-document.getElementById('kategori').textContent = kategori;
+const elNama = document.getElementById('nama');
+const elInstansi = document.getElementById('instansi');
+const elKategori = document.getElementById('kategori');
 
+if (elNama) elNama.textContent = nama;
+if (elInstansi) elInstansi.textContent = instansi;
+if (elKategori) elKategori.textContent = kategori;
 
 // ===== 2. RSVP =====
 

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Blast Undangan</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header class="hero">
+        <h1>Admin Undangan</h1>
+        <p>Edu Fair & Career Day 2026</p>
+    </header>
+
+    <!-- 1. UPLOAD CSV -->
+    <section>
+        <h2>Upload Data Tamu</h2>
+        <input type="file" id="csvFile" accept=".csv">
+    </section>
+
+    <!-- 2. DAFTAR TAMU -->
+    <section>
+        <h2>Daftar Tamu</h2>
+        <div style="overflow-x:auto;">
+            <table id="tabel">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nama</th>
+                        <th>Instansi</th>
+                        <th>Kategori</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelTamu"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- 3. DATA RSVP -->
+    <section>
+        <h2>Data RSVP</h2>
+        <p id="ringkasanRsvp"></p>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Nama</th>
+                        <th>Kehadiran</th>
+                        <th>Jumlah</th>
+                        <th>Waktu</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelRsvp"></tbody>
+            </table>
+        </div>
+        <button onclick="hapusRsvp()" style="margin-top:12px;">Hapus semua data RSVP</button>
+    </section>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script>
+        // ===== BAGIAN A: DAFTAR TAMU DARI CSV =====
+        let dataTamu = [];
+
+        document.getElementById('csvFile').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function (hasil) {
+                    dataTamu = hasil.data;
+                    console.log(dataTamu);   // buat ngecek data kebaca
+                    tampilkanTabel();
+                }
+            });
+        });
+
+        function tampilkanTabel() {
+            const tbody = document.getElementById('tabelTamu');
+            tbody.innerHTML = '';
+
+            dataTamu.forEach(function (t, i) {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${t.id}</td>
+                        <td>${t.nama_tamu}</td>
+                        <td>${t.instansi}</td>
+                        <td>${t.kategori}</td>
+                        <td><button onclick="kirimWA(${i})">Kirim Undangan WhatsApp</button></td>
+                    </tr>`;
+            });
+        }
+
+        function kirimWA(i) {
+            const t = dataTamu[i];
+
+            // alamat index.html di folder yang sama dengan admin.html
+            const base = 'https://USERNAME.github.io/undangan-online/index.html';
+
+            // bikin link personalisasi
+            const link = base
+                + '?to=' + encodeURIComponent(t.nama_tamu)
+                + '&instansi=' + encodeURIComponent(t.instansi)
+                + '&kategori=' + encodeURIComponent(t.kategori);
+
+            // isi pesan
+            const pesan = 'Yth. ' + t.nama_tamu + ' (' + t.instansi + '),\n\n'
+                + 'Kami mengundang Bapak/Ibu untuk hadir di Edu Fair & Career Day 2026.\n'
+                + 'Detail undangan Anda ada di sini:\n' + link + '\n\n'
+                + 'Terima kasih.';
+
+            // buka WhatsApp
+            const urlWA = 'https://wa.me/' + t.no_whatsapp + '?text=' + encodeURIComponent(pesan);
+            window.open(urlWA, '_blank');
+        }
+
+
+        // ===== BAGIAN B: DATA RSVP DARI localStorage =====
+        function tampilkanRsvp() {
+            const daftar = JSON.parse(localStorage.getItem('rsvp') || '[]');
+            const tbody = document.getElementById('tabelRsvp');
+            tbody.innerHTML = '';
+
+            let totalHadir = 0;
+
+            daftar.forEach(function (d, i) {
+                const tr = document.createElement('tr');
+
+                [i + 1, d.nama, d.hadir, d.jumlah, d.waktu].forEach(function (isi) {
+                    const td = document.createElement('td');
+                    td.textContent = isi;
+                    tr.appendChild(td);
+                });
+
+                tbody.appendChild(tr);
+
+                if (d.hadir === 'Hadir') totalHadir += d.jumlah;
+            });
+
+            document.getElementById('ringkasanRsvp').textContent =
+                'Total konfirmasi: ' + daftar.length +
+                ' | Total perwakilan yang hadir: ' + totalHadir;
+        }
+
+        function hapusRsvp() {
+            if (confirm('Yakin hapus semua data RSVP?')) {
+                localStorage.removeItem('rsvp');
+                tampilkanRsvp();
+            }
+        }
+
+        tampilkanRsvp();   // jalan otomatis saat halaman admin dibuka
+    </script>
+</body>
+</html>

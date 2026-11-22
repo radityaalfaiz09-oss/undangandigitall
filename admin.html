@@ -75,10 +75,18 @@
                     transformHeader: function (h) { return h.trim(); },
                     transform: function (v) { return v.trim(); },
                     complete: function (hasil) {
-                    dataTamu = hasil.data;
-                    console.log(dataTamu);   // cek di Console (F12)
-                    tampilkanTabel();
-    }
+                    dataTamu = hasil.data.map(function (r) {
+                    // jaga-jaga: kalau 1 baris terbaca jadi 1 kolom, pecah manual
+                    if (r.instansi === undefined && r.nama_tamu && r.nama_tamu.includes(',')) {
+                    let p = r.nama_tamu.replace(/"/g, '').split(',').map(function (s) { return s.trim(); });
+                    if (p.length === 5) p.shift();   // buang kolom id kalau ada
+                    return { id: '', nama_tamu: p[0], instansi: p[1], kategori: p[2], no_whatsapp: p[3] };
+        }
+        return r;
+    });
+    console.log(dataTamu);
+    tampilkanTabel();
+}
 });
         });
 
